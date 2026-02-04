@@ -22,6 +22,20 @@
             }
           },
           {
+            "id": "9569cbe1abf0ec0e",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Notebook LM Streamline.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Notebook LM Streamline"
+            }
+          },
+          {
             "id": "47889b5becb29f7c",
             "type": "leaf",
             "state": {
@@ -197,14 +211,15 @@
       "bases:Create new base": false
     }
   },
-  "active": "bf0efcfbd7a60034",
+  "active": "4728fd5bbc2e77de",
   "lastOpenFiles": [
+    "Notebook LM Streamline.md",
+    "Project.md",
     "diagrams/high-level-backendsystem.mmd",
     "diagrams/backendsystem.mmd",
     "diagrams/backendsystem.md",
     "diagrams",
     "CESNET-QUIC22 Dataset.md",
-    "Project.md",
     "29-1-26.md",
     "Dataset Research.md",
     "A Real Network Environment Dataset for Traffic Analysis.md",

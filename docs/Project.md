@@ -13,3 +13,8 @@ Part 2: #Backend
 Part 3: #Frontend
 
 Backend + Frontend: pi chart or whatever showing like percentage of each type
+
+
+
+https://notebooklm.google.com/notebook/2b01124a-4caf-44b7-9594-eb9b163e9922  
+[[Notebook LM Streamline]]
