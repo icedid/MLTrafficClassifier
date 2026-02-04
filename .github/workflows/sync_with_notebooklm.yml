@@ -25,10 +25,47 @@ jobs:
             cat "$file" >> master_knowledge.md
           done
 
-      - name: Push to Google Drive
-        uses: adityak74/google-drive-upload-git-action@main
-        with:
-          credentials: ${{ secrets.GDRIVE }}
-          filename: master_knowledge.md
-          folderId: ${{ secrets.GDRIVE_FOLDER }}
-          overwrite: true
+      - name: Update Google Doc Content
+        env:
+          # We use the EXISTING secret (Base64 encoded)
+          GDRIVE_BASE64: ${{ secrets.GDRIVE }}
+          DOC_ID: "1b3-zzNzfAl4maIJ6VuQe0gv3UJsR-8RAzAeoGMjoNyg"
+        run: |
+          pip install google-auth google-api-python-client
+          
+          python - <<EOF
+          import os
+          import json
+          import base64
+          from google.oauth2 import service_account
+          from googleapiclient.discovery import build
+
+          # 1. DECODE the Base64 secret back into JSON
+          encoded_creds = os.environ['GDRIVE_BASE64']
+          decoded_bytes = base64.b64decode(encoded_creds)
+          info = json.loads(decoded_bytes.decode('utf-8'))
+
+          # 2. Authenticate
+          creds = service_account.Credentials.from_service_account_info(info)
+          service = build('docs', 'v1', credentials=creds)
+
+          # 3. Read the Master Markdown File
+          with open('master_knowledge.md', 'r') as f:
+              new_text = f.read()
+
+          # 4. Get Doc length to clean it out
+          doc_id = os.environ['DOC_ID']
+          doc = service.documents().get(documentId=doc_id).execute()
+          content = doc.get('body').get('content')
+          end_index = content[-1].get('endIndex') - 1
+
+          # 5. Overwrite the Doc
+          requests = []
+          if end_index > 1:
+              requests.append({'deleteContent': {'range': {'startIndex': 1, 'endIndex': end_index}}})
+          
+          requests.append({'insertText': {'location': {'index': 1}, 'text': new_text}})
+
+          service.documents().batchUpdate(documentId=doc_id, body={'requests': requests}).execute()
+          print("SUCCESS: Google Doc updated using existing credentials.")
+          EOF
