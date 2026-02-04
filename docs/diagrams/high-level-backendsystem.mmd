@@ -1,0 +1,20 @@
+graph LR
+    subgraph "The Source"
+        Net[Network Traffic / PCAP]
+    end
+
+    subgraph "#Backend"
+        Session[In-Memory Sessionization]
+        
+        subgraph "#MLPart"
+            Features[First 8 Feature Extraction] --> Model[Random Forest Classifier]
+        end
+    end
+
+    subgraph "#Frontend"
+        Visuals[Pie Chart Dashboard]
+    end
+
+    Net --> Session
+    Session --> Features
+    Model --> Visuals
