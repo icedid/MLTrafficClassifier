@@ -1,4 +1,4 @@
-name: sync_with_notebooklm
+name: Live Knowledge Base Sync
 
 on:
   push:
@@ -8,31 +8,25 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-sync:
+  sync-to-google-doc:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Vault
+      - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Aggregate Markdown Files
-        run: |
-          echo "# ML Traffic Classifier - Project Knowledge Base" > master_knowledge.md
-          echo "Last Sync: $(date)" >> master_knowledge.md
-          
-          # Find all .md files inside the 'docs' folder and append them.
-          find ./docs -type f -name "*.md" | while IFS= read -r file; do
-            echo -e "\n\n--- DOCUMENT: $file ---\n" >> master_knowledge.md
-            cat "$file" >> master_knowledge.md
-          done
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
 
-      - name: Update Google Doc Content
+      - name: Install Google Dependencies
+        run: pip install google-auth google-api-python-client
+
+      - name: Aggregate & Push to Google Doc
         env:
-          # We use the EXISTING secret (Base64 encoded)
           GDRIVE_BASE64: ${{ secrets.GDRIVE }}
           DOC_ID: "1b3-zzNzfAl4maIJ6VuQe0gv3UJsR-8RAzAeoGMjoNyg"
         run: |
-          pip install google-auth google-api-python-client
-          
           python - <<EOF
           import os
           import json
@@ -40,32 +34,46 @@ jobs:
           from google.oauth2 import service_account
           from googleapiclient.discovery import build
 
-          # 1. DECODE the Base64 secret back into JSON
-          encoded_creds = os.environ['GDRIVE_BASE64']
-          decoded_bytes = base64.b64decode(encoded_creds)
-          info = json.loads(decoded_bytes.decode('utf-8'))
+          def main():
+              # 1. AUTHENTICATION
+              encoded_creds = os.environ['GDRIVE_BASE64']
+              creds_info = json.loads(base64.b64decode(encoded_creds).decode('utf-8'))
+              creds = service_account.Credentials.from_service_account_info(creds_info)
+              service = build('docs', 'v1', credentials=creds)
 
-          # 2. Authenticate
-          creds = service_account.Credentials.from_service_account_info(info)
-          service = build('docs', 'v1', credentials=creds)
+              # 2. AGGREGATE MARKDOWN FILES
+              full_text = "ML Traffic Classifier - Knowledge Base\n"
+              full_text += "======================================\n\n"
+              
+              for root, dirs, files in os.walk('docs'):
+                  for filename in files:
+                      if filename.endswith(".md"):
+                          with open(os.path.join(root, filename), 'r') as f:
+                              full_text += f"\n\n--- SOURCE: {filename} ---\n\n{f.read()}"
+              
+              # 3. UPDATE GOOGLE DOC
+              doc_id = os.environ['DOC_ID']
+              doc = service.documents().get(documentId=doc_id).execute()
+              end_index = doc.get('body').get('content')[-1].get('endIndex') - 1
 
-          # 3. Read the Master Markdown File
-          with open('master_knowledge.md', 'r') as f:
-              new_text = f.read()
+              requests = []
+              if end_index > 1:
+                  requests.append({
+                      'deleteContentRange': {
+                          'range': {'startIndex': 1, 'endIndex': end_index}
+                      }
+                  })
+              
+              requests.append({
+                  'insertText': {
+                      'location': {'index': 1}, 
+                      'text': full_text
+                  }
+              })
 
-          # 4. Get Doc length to clean it out
-          doc_id = os.environ['DOC_ID']
-          doc = service.documents().get(documentId=doc_id).execute()
-          content = doc.get('body').get('content')
-          end_index = content[-1].get('endIndex') - 1
+              service.documents().batchUpdate(documentId=doc_id, body={'requests': requests}).execute()
+              print("🎉 SUCCESS: Knowledge Base Updated!")
 
-          # 5. Overwrite the Doc
-          requests = []
-          if end_index > 1:
-              requests.append({'deleteContent': {'range': {'startIndex': 1, 'endIndex': end_index}}})
-          
-          requests.append({'insertText': {'location': {'index': 1}, 'text': new_text}})
-
-          service.documents().batchUpdate(documentId=doc_id, body={'requests': requests}).execute()
-          print("SUCCESS: Google Doc updated using existing credentials.")
+          if __name__ == "__main__":
+              main()
           EOF
