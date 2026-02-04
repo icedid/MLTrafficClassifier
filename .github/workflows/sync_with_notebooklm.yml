@@ -4,7 +4,7 @@ on:
   push:
     branches: [ main ]
     paths:
-      - 'docs/**.md' # Only runs when you edit documentation
+      - 'docs/**.md'
   workflow_dispatch:
 
 jobs:
@@ -19,8 +19,7 @@ jobs:
           echo "# ML Traffic Classifier - Project Knowledge Base" > master_knowledge.md
           echo "Last Sync: $(date)" >> master_knowledge.md
           
-          # Find all .md files inside the 'docs' folder.
-          # IFS= read -r handles filenames with spaces correctly.
+          # Find all .md files inside the 'docs' folder and append them.
           find ./docs -type f -name "*.md" | while IFS= read -r file; do
             echo -e "\n\n--- DOCUMENT: $file ---\n" >> master_knowledge.md
             cat "$file" >> master_knowledge.md
@@ -31,5 +30,5 @@ jobs:
         with:
           credentials: ${{ secrets.GDRIVE }}
           filename: master_knowledge.md
-          folderId: ${{ secrets.GDRIVE_FOLDER }} # Use the FOLDER ID here, not the file ID
+          folderId: ${{ secrets.GDRIVE_FOLDER }}
           overwrite: true
