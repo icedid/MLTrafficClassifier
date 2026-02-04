@@ -31,5 +31,5 @@ jobs:
         with:
           credentials: ${{ secrets.GDRIVE }}
           filename: master_knowledge.md
-          folderId: ${{ secrets.GDRIVE_FOLDER }}
+          fileId: ${{ secrets.GDRIVE_FILE_ID }}  # Targeted update
           overwrite: true
