@@ -4,8 +4,8 @@ on:
   push:
     branches: [ main ]
     paths:
-      - 'docs/**.md'
-  workflow_dispatch:
+      - 'docs/**.md'  # This is the "Live Trigger" you asked for
+  workflow_dispatch:   # This allows you to click "Run Workflow" manually for testing
 
 jobs:
   sync-to-google-doc:
@@ -36,43 +36,57 @@ jobs:
 
           def main():
               # 1. AUTHENTICATION
-              encoded_creds = os.environ['GDRIVE_BASE64']
-              creds_info = json.loads(base64.b64decode(encoded_creds).decode('utf-8'))
-              creds = service_account.Credentials.from_service_account_info(creds_info)
-              service = build('docs', 'v1', credentials=creds)
+              try:
+                  encoded_creds = os.environ['GDRIVE_BASE64']
+                  creds_info = json.loads(base64.b64decode(encoded_creds).decode('utf-8'))
+                  creds = service_account.Credentials.from_service_account_info(creds_info)
+                  service = build('docs', 'v1', credentials=creds)
+              except Exception as e:
+                  print(f"Auth error: {e}")
+                  exit(1)
 
               # 2. AGGREGATE MARKDOWN FILES
               full_text = "ML Traffic Classifier - Knowledge Base\n"
+              full_text += f"Last Compiled: {os.popen('date').read()}\n"
               full_text += "======================================\n\n"
               
+              # Walk through docs/ folder
               for root, dirs, files in os.walk('docs'):
                   for filename in files:
                       if filename.endswith(".md"):
                           with open(os.path.join(root, filename), 'r') as f:
-                              full_text += f"\n\n--- SOURCE: {filename} ---\n\n{f.read()}"
+                              full_text += f"\n\n--- SOURCE: {filename} ---\n\n"
+                              full_text += f.read()
               
               # 3. UPDATE GOOGLE DOC
               doc_id = os.environ['DOC_ID']
-              doc = service.documents().get(documentId=doc_id).execute()
-              end_index = doc.get('body').get('content')[-1].get('endIndex') - 1
+              try:
+                  doc = service.documents().get(documentId=doc_id).execute()
+                  content = doc.get('body').get('content')
+                  end_index = content[-1].get('endIndex') - 1
 
-              requests = []
-              if end_index > 1:
+                  requests = []
+                  # Correct API name: deleteContentRange
+                  if end_index > 1:
+                      requests.append({
+                          'deleteContentRange': {
+                              'range': {'startIndex': 1, 'endIndex': end_index}
+                          }
+                      })
+                  
                   requests.append({
-                      'deleteContentRange': {
-                          'range': {'startIndex': 1, 'endIndex': end_index}
+                      'insertText': {
+                          'location': {'index': 1}, 
+                          'text': full_text
                       }
                   })
-              
-              requests.append({
-                  'insertText': {
-                      'location': {'index': 1}, 
-                      'text': full_text
-                  }
-              })
 
-              service.documents().batchUpdate(documentId=doc_id, body={'requests': requests}).execute()
-              print("🎉 SUCCESS: Knowledge Base Updated!")
+                  service.documents().batchUpdate(documentId=doc_id, body={'requests': requests}).execute()
+                  print("🎉 SUCCESS: Knowledge Base Updated in Google Docs!")
+
+              except Exception as e:
+                  print(f"Google API Error: {e}")
+                  exit(1)
 
           if __name__ == "__main__":
               main()
