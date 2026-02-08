@@ -1,0 +1,24 @@
+sequenceDiagram
+    participant FE as Frontend (Dashboard)
+    participant BE as Backend (Python)
+    participant NIC as Network Interface
+
+    Note over FE, BE: 1. Initialization
+    FE->>BE: Start Sniffing (Interface ID)
+    BE->>NIC: Open Socket
+    
+    Note over BE, NIC: 2. Real-Time Processing
+    loop Every Packet
+        NIC->>BE: Raw Packet
+        Note over BE: Group by 5-tuple
+        Note over BE: Check: Is this Packet #8?
+        
+        rect rgb(240, 248, 255)
+            Note over BE: If Yes: Run Random Forest
+            BE->>FE: WebSocket: { "app": "Video", "src": "192.168.1.5" }
+        end
+    end
+
+    Note over FE: 3. UI Update
+    FE->>FE: Update Pie Chart
+    FE->>FE: Add Row to Log
