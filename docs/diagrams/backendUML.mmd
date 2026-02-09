@@ -1,0 +1,44 @@
+classDiagram
+    %% 1. The Controller (Blue)
+    class TrafficEngine {
+        <<Orchestrator>>
+        +start()
+        +stop()
+    }
+    style TrafficEngine fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#1565c0
+
+    %% 2. The Data Ingestion (Yellow)
+    class PacketSource {
+        <<Interface>>
+        +start_streaming(callback)
+    }
+    style PacketSource fill:#fff8e1,stroke:#fbc02d,stroke-width:2px,color:#fbc02d
+
+    %% 3. The Logic Pipeline (Purple)
+    class AnalysisPipeline {
+        <<Service>>
+        -FlowTracker tracker
+        -Classifier model
+        +process_packet(packet)
+        +on_classification(callback)
+    }
+    style AnalysisPipeline fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#7b1fa2
+
+    %% 4. The Observers (Green)
+    class IResultObserver {
+        <<Interface>>
+        +notify(result)
+    }
+    class WebSocketReporter
+    class CSVLogger
+    style IResultObserver fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#2e7d32
+    style WebSocketReporter fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#2e7d32
+    style CSVLogger fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#2e7d32
+
+    %% Refactored Relationships
+    TrafficEngine --> PacketSource : initializes
+    TrafficEngine --> AnalysisPipeline : configures
+    PacketSource --> AnalysisPipeline : streams to
+    AnalysisPipeline --|> IResultObserver : notifies
+    IResultObserver <|-- WebSocketReporter : implements
+    IResultObserver <|-- CSVLogger : implements
