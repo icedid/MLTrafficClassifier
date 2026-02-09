@@ -1,0 +1,67 @@
+graph LR
+    %% Styling Definitions
+    classDef control fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#1565c0;
+    classDef capture fill:#fff8e1,stroke:#fbc02d,stroke-width:2px,color:#fbc02d;
+    classDef logic fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#7b1fa2;
+    classDef storage fill:#f5f5f5,stroke:#424242,stroke-width:2px,color:#424242;
+    classDef ui fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#2e7d32;
+    classDef queue fill:#ffffff,stroke:#33691e,stroke-width:2px,stroke-dasharray: 5 5;
+
+    %% 1. Input/Control Section
+    subgraph Control [User Interface]
+        User((fa:fa-user User))
+        REST[REST API]
+        User -->|Start/Stop| REST
+    end
+
+    %% 2. The Producer Thread
+    subgraph Producer [Thread 1: Capture]
+        NIC[fa:fa-network-wired NIC]
+        Sniff[Scapy Sniffer]
+        NIC --> Sniff
+        REST -.->|Toggle| Sniff
+    end
+
+    %% 3. The Buffer
+    PQueue[("fa:fa-exchange-alt<br/>Thread-Safe Queue")]
+
+    %% 4. The Consumer Thread
+    subgraph Consumer [Thread 2: ML Engine]
+        FT[Flow Tracker]
+        Buffer{Pkt Count?}
+        Math[Feature Engine]
+        RF[Random Forest]
+        
+        FT --> Buffer
+        Buffer -- "1-7" --> FT
+        Buffer -- "== 8" --> Math
+        Buffer -- "> 8" --> Ignore[Drop]
+        Math --> RF
+    end
+
+    %% 5. Output Section
+    subgraph Output [Delivery & Storage]
+        Res[Prediction]
+        Stats[RAM Stats]
+        CSV[CSV Log]
+        WS[WebSocket]
+        UI[fa:fa-chart-pie Dashboard]
+
+        RF --> Res
+        Res --> Stats
+        Res --> CSV
+        Res --> WS
+        WS --> UI
+    end
+
+    %% Flow Arrows
+    Sniff ==>|PUSH| PQueue
+    PQueue ==>|PULL| FT
+
+    %% Applying Classes
+    class User,REST control;
+    class NIC,Sniff capture;
+    class PQueue queue;
+    class FT,Buffer,Math,RF,Ignore logic;
+    class Stats,CSV storage;
+    class Res,WS,UI ui;
