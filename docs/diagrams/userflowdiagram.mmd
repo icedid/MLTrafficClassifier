@@ -1,0 +1,23 @@
+flowchart TD
+    Start([User Opens Dashboard]) --> Connect{Backend Connected?}
+    Connect -- No --> Error[Show Connection Error]
+    Connect -- Yes --> Settings[Select Network Interface]
+
+    Settings --> StartSniff[Click 'Start Monitoring']
+    StartSniff --> Loading[Backend initializes Scapy & ML Model]
+    
+    Loading --> LiveView[Live Dashboard View]
+    
+    subgraph "The Classification Loop"
+        LiveView --> Wait[Wait for WebSocket Event]
+        Wait --> NewData{New Prediction Received?}
+        NewData -- Yes --> UpdateUI[Update Pie Chart & Event Log]
+        UpdateUI --> Wait
+    end
+
+    LiveView --> Inspect[Click Flow in Table for Details]
+    Inspect --> Modal[Show 54-Feature Statistics]
+    
+    LiveView --> Stop[Click 'Stop Monitoring']
+    Stop --> Summary[Show Session Summary Report]
+    Summary --> End([End Session])
