@@ -1,0 +1,55 @@
+classDiagram
+    %% --- FRONTEND: Your Domain (UI/Templates) ---
+    namespace Frontend_Layer {
+        class Index_HTML {
+            <<Main Layout>>
+            +String tailwind_cdn
+            +Div sidebar_nav
+            +Div main_dashboard_slot
+            +Attribute hx_get_stats
+            +Attribute hx_trigger_polling
+        }
+
+        class Stat_Card_HTML {
+            <<Fragment>>
+            +String css_classes: "rounded-xl shadow-lg"
+            +String label_var: "( label )"
+            +String value_var: "( value )"
+        }
+
+        class Table_HTML {
+            <<Fragment>>
+            +String loop_var: "for session in sessions"
+            +String row_style: "hover:bg-slate-700"
+        }
+    }
+
+    %% --- BACKEND: Partner's Domain (Processing) ---
+    namespace Backend_Layer {
+        class FastAPI_Server {
+            <<API Controller>>
+            +get_dashboard()
+            +get_live_stats()
+            +get_traffic_history()
+        }
+
+        class Traffic_Processor {
+            <<Engine>>
+            +Session_Buffer flows
+            +extract_features_54()
+            +apply_first_8_rule()
+        }
+
+        class ML_Model {
+            <<Classifier>>
+            +RandomForest model
+            +predict_label()
+        }
+    }
+
+    %% --- THE COMMUNICATION CONTRACT ---
+    Index_HTML --|> Stat_Card_HTML : contains
+    Index_HTML ..> FastAPI_Server : HTTP GET (HTMX)
+    FastAPI_Server --> Traffic_Processor : reads flow data
+    Traffic_Processor --> ML_Model : requests inference
+    FastAPI_Server --> Stat_Card_HTML : renders with data

@@ -6,8 +6,9 @@ Part 1: #MLPart
 Try to rework script. script could be wrong...
 Script reworked.
 
+[[Tech Stack]]
 
-Part 2: #Backend [[backend]]
+Part 2: #Backend 
 
 
 Part 3: #Frontend
