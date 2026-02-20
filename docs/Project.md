@@ -16,11 +16,12 @@ Part 3: #Frontend
 Backend + Frontend: pi chart or whatever showing like percentage of each type
 
 
-| **Layer**             | **Responsibility**                                                                              | **Returns / Outputs**                             |
-| --------------------- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------- |
-| **1. Backend Engine** | **Networking & ML:** Captures packets, extracts 54 features, runs the Random Forest.            | Raw data saved to a **shared variable/database**. |
-| **2. Backend API**    | **The Web Server:** Handles HTMX requests, talks to the Engine, and "cooks" the HTML fragments. | **HTML Fragments** (with Tailwind classes).       |
-| **3. Frontend**       | **The UI:** Displays the dashboard and triggers the HTMX updates every few seconds.             | **The Visual Experience.**                        |
+| **Layer**             | **Responsibility**                                                                                                                                                                     | **Returns / Outputs**                             |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| **1. Backend Engine** | **Networking & ML:** Captures packets, extracts 54 features, runs the Random Forest.                                                                                                   | Raw data saved to a **shared variable/database**. |
+| **2. Interface        | blueprint that defines exactly what an "Engine" must do.                                                                                                                               | **HTML Fragments** (with Tailwind classes).       |
+| **3. Frontend**       | **The Web Server:** Handles HTMX requests, talks to the Engine, and "cooks" the HTML fragments.<br>**The UI:** Displays the dashboard and triggers the HTMX updates every few seconds. | **The Visual Experience.**                        |
+|                       |                                                                                                                                                                                        |                                                   |
 
 https://notebooklm.google.com/notebook/2b01124a-4caf-44b7-9594-eb9b163e9922  
 [[Notebook LM Streamline]]
