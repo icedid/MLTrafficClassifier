@@ -1,4 +1,6 @@
 from abc  import ABC, abstractmethod
+from typing import Dict
+
 
 class NetworkEngineProvider(ABC):
     
@@ -12,4 +14,5 @@ class NetworkEngineProvider(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get
+    def ReturnLabelcount(self) -> Dict[str,int]:
+        raise NotImplementedError
