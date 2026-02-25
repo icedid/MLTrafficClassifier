@@ -1,27 +1,31 @@
-Part 1: #MLPart 
-[[Dataset Research]]
-[[CESNET-QUIC22 Dataset]]
-[[29-1-26]]
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/YOUR_USERNAME/YOUR_REPO/blob/main/YOUR_NOTEBOOK.ipynb)
-Try to rework script. script could be wrong...
-Script reworked.
+# Network Traffic Classifier
 
-[[Tech Stack]]
+> Real-time network traffic classification using Deep Flow Inspection 
 
-Part 2: #Backend 
-[[BackendEngineReqs]]
+---
 
-Part 3: #Frontend
+## ML Model `#MLPart`
 
-Backend + Frontend: pi chart or whatever showing like percentage of each type
+- [[Dataset Research]]
+- [[CESNET-QUIC22 Dataset]]
+- [[A Real Network Environment Dataset for Traffic Analysis]]
+- [[Model]]
+- [[Tech Stack]]
+- [[29-1-26]]
+- [[Notebook LM Streamline]]
+- [[PCAP]]
+
+## Backend `#Backend`
+
+- [[BackendEngineReqs]]
+- [[backend design pattern]]
 
 
-| **Layer**             | **Responsibility**                                                                                                                                                                     | **Returns / Outputs**                             |
-| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
-| **1. Backend Engine** | **Networking & ML:** Captures packets, extracts 54 features, runs the Random Forest.                                                                                                   | Raw data saved to a **shared variable/database**. |
-| **2. Interface        | blueprint that defines exactly what an "Engine" must do.                                                                                                                               | **HTML Fragments** (with Tailwind classes).       |
-| **3. Frontend**       | **The Web Server:** Handles HTMX requests, talks to the Engine, and "cooks" the HTML fragments.<br>**The UI:** Displays the dashboard and triggers the HTMX updates every few seconds. | **The Visual Experience.**                        |
-|                       |                                                                                                                                                                                        |                                                   |
+## Frontend `#Frontend`
 
-https://notebooklm.google.com/notebook/2b01124a-4caf-44b7-9594-eb9b163e9922  
-[[Notebook LM Streamline]]
+
+---
+
+## Resources
+- [Open In Colab](https://colab.research.google.com/github/YOUR_USERNAME/YOUR_REPO/blob/main/YOUR_NOTEBOOK.ipynb)
+- [NotebookLM Workspace](https://notebooklm.google.com/notebook/2b01124a-4caf-44b7-9594-eb9b163e9922)
