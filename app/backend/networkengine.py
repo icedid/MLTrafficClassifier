@@ -7,7 +7,7 @@ from collections import defaultdict
 from backend import NetworkEngineProvider
 
 
-class NetworkEngine():
+class NetworkEngine(NetworkEngineProvider):
     
     def __init__(self):
         self.model
