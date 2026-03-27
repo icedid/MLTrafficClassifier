@@ -1,2 +1,5 @@
 fastapi[all]
 jinja2
+joblib
+pandas
+numpy
