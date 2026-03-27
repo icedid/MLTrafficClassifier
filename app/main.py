@@ -11,7 +11,7 @@ import uvicorn
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     mode = os.getenv("APP_MODE", "test")
-    app.state.engine = EngineFactory.create_engine("test")
+    app.state.engine = EngineFactory.getEngine("test")
     app.state.engine.start()
     print("Engine started in mode:", mode)
     yield
@@ -19,7 +19,8 @@ async def lifespan(app: FastAPI):
     app.state.engine.stop()
     print("Engine stopped.")
 
-app = FastAPI()
+
+app = FastAPI(lifespan=lifespan)
 
 
 # --- THE DATA BRIDGE ---
