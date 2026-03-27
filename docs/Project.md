@@ -14,6 +14,7 @@
 - [[29-1-26]]
 - [[Notebook LM Streamline]]
 - [[PCAP]]
+- [[Target market]]
 
 ## Backend `#Backend`
 
@@ -29,3 +30,4 @@
 ## Resources
 - [Open In Colab](https://colab.research.google.com/github/YOUR_USERNAME/YOUR_REPO/blob/main/YOUR_NOTEBOOK.ipynb)
 - [NotebookLM Workspace](https://notebooklm.google.com/notebook/2b01124a-4caf-44b7-9594-eb9b163e9922)
+
