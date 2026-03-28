@@ -11,7 +11,7 @@ import uvicorn
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     mode = os.getenv("APP_MODE", "test")
-    app.state.engine = EngineFactory.getEngine("test")
+    app.state.engine = EngineFactory.getEngine("prod")
     app.state.engine.start()
     print("Engine started in mode:", mode)
     yield

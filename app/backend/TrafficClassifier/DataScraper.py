@@ -1,0 +1,20 @@
+from scapy.all import sniff, IP
+
+class PacketSniffer:
+    def __init__(self, interface: str, packet_callback):
+        self.interface = interface
+        self.packet_callback = packet_callback # This is the function it will 'ping'
+        self._running = False
+
+    def start(self):
+        self._running = True
+        print(f"[*] Sniffer started on {self.interface}")
+        sniff(
+            iface=self.interface,
+            prn=self.packet_callback, # Every packet goes to the Engine's method
+            stop_filter=lambda x: not self._running,
+            store=0
+        )
+
+    def stop(self):
+        self._running = False
