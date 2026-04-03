@@ -18,3 +18,14 @@ class PacketSniffer:
 
     def stop(self):
         self._running = False
+
+    def extract_features(packet):
+        # Example: Pulling raw data from the IP layer
+        if packet.haslayer(IP):
+            return [
+                len(packet),           # Feature 1: Length
+                packet[IP].ttl,        # Feature 2: TTL
+                packet[IP].proto,      # Feature 3: Protocol ID
+                # Add more to match your model's training requirements
+            ]
+        return None
