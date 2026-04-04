@@ -5,7 +5,7 @@ import numpy as np
 from backend.TrafficClassifier.DataScraper import PacketSniffer
 
 class TrafficClassifier:
-    def __init__(self, model_path: str, encoder_path: str):
+    def __init__(self, model_path: str, encoder_path: str, interface: str):
         """
         Initializes the brain of Net-Sentinel.
         Loads the Random Forest model and the Label Encoder.

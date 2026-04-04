@@ -1,14 +1,17 @@
 import threading
 import time
-from typing import Dict
+from typing import Dict, Optional
 from backend.engineblueprint import NetworkEngineProvider
 from .TrafficClassifier.TrafficClassifier import TrafficClassifier
+from scapy.all import get_working_if, conf
 
 class NetworkEngine(NetworkEngineProvider):
     
-    def __init__(self, model_path: str, encoder_path: str):
-        # 1. Initialize the ML Brain (The 'Translator')
-        self.classifier = TrafficClassifier(model_path, encoder_path)
+    def __init__(self, model_path: str, encoder_path: str, interface: Optional[str] = None) :
+        
+        self.interface = self._determine_interface(interface)
+        
+        self.classifier = TrafficClassifier(model_path, encoder_path, interface)
         
         # 2. State management
         self._running = False
@@ -53,7 +56,7 @@ class NetworkEngine(NetworkEngineProvider):
         while self._running:
             # 1. Capture/Extract Features 
             # (Replace this with your real sniffer logic later)
-            mock_features = [0.1, 1500, 0.5, 12, 45] 
+            mock_features = [0.0] * 54
             
             # 2. Run the ML Prediction
             label = self.classifier.predict(mock_features)
@@ -64,3 +67,20 @@ class NetworkEngine(NetworkEngineProvider):
             
             # 4. Small sleep to prevent CPU spiking (adjust based on packet rate)
             time.sleep(0.5)
+            
+    def _determine_interface(self, provided_iface: Optional[str]) -> str:
+        """Logic to find the best network interface."""
+        if provided_iface:
+            print(f"[*] Using manually specified interface: {provided_iface}")
+            return provided_iface
+        
+        try:
+            # Scapy magic: finds the interface used for the default gateway
+            auto_iface = get_working_if().name
+            print(f"[*] Auto-detected active interface: {auto_iface}")
+            return auto_iface
+        except Exception as e:
+            # Fallback to whatever Scapy thinks is default
+            fallback = conf.iface
+            print(f"[!] Auto-detection failed ({e}). Falling back to: {fallback}")
+            return str(fallback)
