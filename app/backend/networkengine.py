@@ -1,7 +1,7 @@
 import threading
 import time
 from typing import Dict
-from .core.base import NetworkEngineProvider
+from backend.engineblueprint import NetworkEngineProvider
 from .TrafficClassifier.TrafficClassifier import TrafficClassifier
 
 class NetworkEngine(NetworkEngineProvider):

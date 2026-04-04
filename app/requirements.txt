@@ -3,4 +3,4 @@ jinja2
 joblib
 pandas
 numpy
-scrapy
+scapy
