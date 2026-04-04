@@ -14,19 +14,18 @@ class EngineFactory:
         if mode == "prod":
             print("--- RUNNING IN PRODUCTION MODE (REAL TRAFFIC) ---")
             
+            BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+            model_path = os.path.join(BASE_DIR, "TrafficClassifier", "traffic_classifier_rf.pkl")
+            encoder_path = os.path.join(BASE_DIR, "TrafficClassifier", "label_encoder.pkl")
+            
             validators = [MLAssetValidator()]
             assets_to_check = [model_path, encoder_path]
-            
-            
-            # 3. Execute Pre-flight Checks
+
             ml_check = MLAssetValidator().is_valid([model_path, encoder_path])
             if not ml_check.success:
                 print(f"\n[!] ML ASSET ERROR: {ml_check.message}\n")
                 raise SystemExit("Engine startup failed: ML assets invalid.")
             
-            BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-            model_path = os.path.join(BASE_DIR, "TrafficClassifier", "traffic_classifier_rf.pkl")
-            encoder_path = os.path.join(BASE_DIR, "TrafficClassifier", "label_encoder.pkl")
             return RealTrafficEngine(model_path,encoder_path)
         else:
             raise ValueError(f"Invalid mode '{mode}'")
