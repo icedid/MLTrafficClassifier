@@ -80,7 +80,7 @@ class NetworkEngine(NetworkEngineProvider):
                 # 2. Run the ML Prediction
                 label = self.classifier.predict(features)
                 
-                #print(f"[RESULT] Classified as: {label}")
+                print(f"[RESULT] Classified as: {label}")
                 
                 # 3. Update the counts
                 if label in self.labelcount:
