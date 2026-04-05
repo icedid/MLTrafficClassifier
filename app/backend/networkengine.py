@@ -4,6 +4,8 @@ from typing import Dict, Optional
 from backend.engineblueprint import NetworkEngineProvider
 from .TrafficClassifier.TrafficClassifier import TrafficClassifier
 from scapy.all import get_working_if, conf
+import queue
+from backend.TrafficClassifier.DataScraper import PacketSniffer
 
 class NetworkEngine(NetworkEngineProvider):
     
@@ -12,6 +14,10 @@ class NetworkEngine(NetworkEngineProvider):
         self.interface = self._determine_interface(interface)
         
         self.classifier = TrafficClassifier(model_path, encoder_path, interface)
+        
+        self.scraper = PacketSniffer(interface, self.handle_data)
+        self.data_lock = threading.Lock()
+        self.packet_queue = queue.Queue()
         
         # 2. State management
         self._running = False
@@ -46,6 +52,12 @@ class NetworkEngine(NetworkEngineProvider):
         self._running = False
         if self._thread:
             self._thread.join(timeout=2)
+            
+    def handle_data(self, packet):
+        features = self.sniffer.extract_features(packet)
+        
+        if features is not None:
+            self.output_queue.put(features)
 
     def ReturnLabelcount(self) -> Dict[str, int]:
         """Returns the current classification tally."""
@@ -56,10 +68,10 @@ class NetworkEngine(NetworkEngineProvider):
         while self._running:
             # 1. Capture/Extract Features 
             # (Replace this with your real sniffer logic later)
-            mock_features = [0.0] * 54
+            features = self.packet_queue.get(timeout=1.0)
             
             # 2. Run the ML Prediction
-            label = self.classifier.predict(mock_features)
+            label = self.classifier.predict(features)
             
             # 3. Update the counts
             if label in self.labelcount:

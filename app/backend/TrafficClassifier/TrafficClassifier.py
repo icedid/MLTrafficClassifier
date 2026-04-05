@@ -2,8 +2,6 @@ import joblib
 import pandas as pd
 import numpy as np
 
-from backend.TrafficClassifier.DataScraper import PacketSniffer
-
 class TrafficClassifier:
     def __init__(self, model_path: str, encoder_path: str, interface: str):
         """
@@ -13,30 +11,10 @@ class TrafficClassifier:
         try:
             self.model = joblib.load(model_path)
             self.encoder = joblib.load(encoder_path)
-            self.sniffer = PacketSniffer(interface=interface, packet_callback=self.process_packet)
             print(f"Successfully loaded model from {model_path}")
         except Exception as e:
             print(f"Error loading ML assets: {e}")
             raise
-
-    def process_packet(self, packet):
-        """
-        This is the bridge. Every time the sniffer hears a packet, 
-        it runs this function.
-        """
-        # A. Extract features from the raw packet
-        features = self.sniffer.extract_features(packet)
-        
-        if features:
-            # B. Get the prediction and confidence from the classifier
-            prediction = self.classifier.predict(features)
-            confidence = self.classifier.get_confidence(features)
-            
-            # C. Output the result (This is where your frontend would get data)
-            print(f"[+] Traffic Detected: {prediction} ({confidence:.2%} confidence)")
-        else:
-            # Optionally handle non-IP or non-relevant traffic
-            pass
 
     def predict(self, feature_vector: list) -> str:
         """
