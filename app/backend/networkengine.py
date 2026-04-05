@@ -15,7 +15,7 @@ class NetworkEngine(NetworkEngineProvider):
         
         self.classifier = TrafficClassifier(model_path, encoder_path, interface)
         
-        self.scraper = PacketSniffer(interface, self.handle_data)
+        self.scraper = PacketSniffer(self.interface, self.handle_data)
         self.data_lock = threading.Lock()
         self.packet_queue = queue.Queue()
         
@@ -42,9 +42,15 @@ class NetworkEngine(NetworkEngineProvider):
 
         print("Starting Network Engine...")
         self._running = True
+        
+        self.sniffer_thread = threading.Thread(target=self.scraper.start, daemon=True)
+        self.sniffer_thread.start()
+    
         # We run the loop in a separate thread so FastAPI can keep serving the UI
         self._thread = threading.Thread(target=self._run_loop, daemon=True)
         self._thread.start()
+        
+
 
     def stop(self) -> None:
         """Signals the background loop to stop gracefully."""
@@ -54,10 +60,10 @@ class NetworkEngine(NetworkEngineProvider):
             self._thread.join(timeout=2)
             
     def handle_data(self, packet):
-        features = self.sniffer.extract_features(packet)
+        features = self.scraper.extract_features(self, packet)
         
         if features is not None:
-            self.output_queue.put(features)
+            self.packet_queue.put(features)
 
     def ReturnLabelcount(self) -> Dict[str, int]:
         """Returns the current classification tally."""
@@ -68,18 +74,26 @@ class NetworkEngine(NetworkEngineProvider):
         while self._running:
             # 1. Capture/Extract Features 
             # (Replace this with your real sniffer logic later)
-            features = self.packet_queue.get(timeout=1.0)
-            
-            # 2. Run the ML Prediction
-            label = self.classifier.predict(features)
-            
-            # 3. Update the counts
-            if label in self.labelcount:
-                self.labelcount[label] += 1
-            
-            # 4. Small sleep to prevent CPU spiking (adjust based on packet rate)
-            time.sleep(0.5)
-            
+            try:
+                features = self.packet_queue.get(timeout=1.0)
+                
+                # 2. Run the ML Prediction
+                label = self.classifier.predict(features)
+                
+                #print(f"[RESULT] Classified as: {label}")
+                
+                # 3. Update the counts
+                if label in self.labelcount:
+                    self.labelcount[label] += 1
+                
+                # 4. Small sleep to prevent CPU spiking (adjust based on packet rate)
+                time.sleep(0.5)
+            except queue.Empty:
+                continue
+            except Exception as e:
+                print(f"[*] Unexpected error in worker: {e}")
+                break
+                
     def _determine_interface(self, provided_iface: Optional[str]) -> str:
         """Logic to find the best network interface."""
         if provided_iface:

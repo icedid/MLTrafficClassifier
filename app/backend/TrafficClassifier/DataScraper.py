@@ -19,8 +19,10 @@ class PacketSniffer:
     def stop(self):
         self._running = False
 
-    def extract_features(packet):
+    def extract_features(self, *args):
         # Example: Pulling raw data from the IP layer
+        packet = args[-1]
+        
         if packet.haslayer(IP):
             return [
                 len(packet),           # Feature 1: Length
