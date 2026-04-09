@@ -78,7 +78,7 @@ class NetworkEngine(NetworkEngineProvider):
                 features = self.packet_queue.get(timeout=1.0)
                 
                 # 2. Run the ML Prediction
-                label = self.classifier.predict(features)
+                label = self.classifier.get_prediction_with_threshold(features)
                 
                 print(f"[RESULT] Classified as: {label}")
                 

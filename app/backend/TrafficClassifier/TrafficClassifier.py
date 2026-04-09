@@ -38,6 +38,7 @@ class TrafficClassifier:
         except Exception as e:
             print(f"Inference error: {e}")
             return "Unknown"
+        
 
     def get_confidence(self, feature_vector: list) -> float:
         """
@@ -47,3 +48,28 @@ class TrafficClassifier:
         data = np.array(feature_vector).reshape(1, -1)
         probabilities = self.model.predict_proba(data)
         return float(np.max(probabilities))
+    
+    def get_prediction_with_threshold(self, feature_vector: list, threshold: float = 0.6):
+        """
+        The 'Gold Standard' method: Performs inference ONCE and applies logic.
+        """
+        try:
+            # 1. Single Inference Pass
+            data = np.array(feature_vector).reshape(1, -1)
+            probabilities = self.model.predict_proba(data)[0] # Shape: [n_classes]
+            
+            # 2. Extract stats
+            max_prob = np.max(probabilities)
+            prediction_numeric = np.argmax(probabilities)
+
+            # 3. Threshold Logic
+            if max_prob >= threshold:
+                label = self.encoder.inverse_transform([prediction_numeric])[0]
+            else:
+                label = "Unknown" # Noise reduction happens here
+
+            return label, float(max_prob)
+
+        except Exception as e:
+            print(f"Inference error: {e}")
+            return "Error", 0.0
