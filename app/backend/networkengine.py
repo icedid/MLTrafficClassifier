@@ -80,7 +80,7 @@ class NetworkEngine(NetworkEngineProvider):
                 # 2. Run the ML Prediction
                 label,confidence = self.classifier.get_prediction_with_threshold(features)
                 
-                print(f"[RESULT] Classified as: {label}")
+                print(f"[RESULT] Classified as: {label:<20} | Confidence: {confidence:.2f}")
                 
                 # 3. Update the counts
                 if label in self.labelcount:

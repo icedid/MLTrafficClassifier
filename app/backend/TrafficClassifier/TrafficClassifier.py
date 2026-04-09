@@ -11,6 +11,20 @@ class TrafficClassifier:
         try:
             self.model = joblib.load(model_path)
             self.encoder = joblib.load(encoder_path)
+            
+            # Updated to match the Onu_features.csv schema exactly
+            self.feature_names = [
+                f"{prefix}_{stat}" 
+                for prefix in ["up_pkt_len", "up_pkt_iat", "down_pkt_len", "down_pkt_iat", "bi_pkt_len", "bi_pkt_iat"]
+                for stat in ["min", "max", "avg", "median", "25_per", "75_per", "mad", "std"]
+            ] + [
+                "transport_code", 
+                "up_pkt_num", 
+                "https_up_pkt_num", 
+                "https_down_pkt_num", 
+                "http_up_pkt_num", 
+                "http_down_pkt_num"
+            ]
             print(f"Successfully loaded model from {model_path}")
         except Exception as e:
             print(f"Error loading ML assets: {e}")
@@ -26,7 +40,7 @@ class TrafficClassifier:
         """
         try:
             # 1. Convert to 2D array (1 sample, N features)
-            data = np.array(feature_vector).reshape(1, -1)
+            data = pd.DataFrame([feature_vector], columns=self.feature_names)
             
             # 2. Perform the prediction (returns a number)
             prediction_numeric = self.model.predict(data)
@@ -45,7 +59,7 @@ class TrafficClassifier:
         Optional: Returns the probability score (0.0 to 1.0)
         Useful for the 'Confidence' bar on your frontend.
         """
-        data = np.array(feature_vector).reshape(1, -1)
+        data = pd.DataFrame([feature_vector], columns=self.feature_names)
         probabilities = self.model.predict_proba(data)
         return float(np.max(probabilities))
     
@@ -55,7 +69,7 @@ class TrafficClassifier:
         """
         try:
             # 1. Single Inference Pass
-            data = np.array(feature_vector).reshape(1, -1)
+            data = pd.DataFrame([feature_vector], columns=self.feature_names)
             probabilities = self.model.predict_proba(data)[0] # Shape: [n_classes]
             
             # 2. Extract stats
