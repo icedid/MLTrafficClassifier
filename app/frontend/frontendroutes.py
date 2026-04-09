@@ -12,6 +12,10 @@ async def serve_dashboard(request: Request):
     # This syntax is mandatory for Starlette 1.0.0+
     return templates.TemplateResponse(request=request, name="index.html")
 
+@router.get("/api/v1/label-counts/data")
+async def get_label_counts_data(request: Request):
+    return request.app.state.engine.ReturnLabelcount()
+
 @router.get("/api/v1/label-counts", response_class=HTMLResponse)
 async def get_label_counts(request: Request):
     counts = request.app.state.engine.ReturnLabelcount()

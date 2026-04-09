@@ -2,29 +2,95 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Net-Sentinel Dashboard</title>
-    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ML Traffic Classifier Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { background-color: #09090b; color: #fafafa; }
+    </style>
 </head>
-<body class="bg-[#09090b] p-10 text-zinc-400">
+<body class="antialiased font-sans p-8">
+    <div class="max-w-6xl mx-auto">
+        <header class="mb-10 flex justify-between items-end border-b border-zinc-800 pb-6">
+            <div>
+                <h1 class="text-3xl font-bold tracking-tighter text-indigo-500">Traffic<span class="text-zinc-100">Classifier</span></h1>
+                <p class="text-zinc-500 text-sm mt-1">Real-time packet classification engine</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="relative flex h-2 w-2">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                <span class="text-[10px] font-mono uppercase tracking-widest text-zinc-400">Live Stream</span>
+            </div>
+        </header>
 
-    <div class="max-w-md mx-auto">
-        <div class="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6">
-            <h3 class="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-4">
-                Live Label Distribution
-            </h3>
-            
-            <div hx-get="/api/v1/label-counts" 
-                 hx-trigger="load, every 2s" 
-                 hx-swap="innerHTML">
-                
-                <div class="flex items-center gap-2">
-                    <div class="h-1.5 w-1.5 bg-indigo-500 animate-ping rounded-full"></div>
-                    <span class="text-[10px] text-zinc-600 uppercase">Connecting to Engine...</span>
+        <main class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Labels List -->
+            <div class="lg:col-span-1 bg-zinc-900/50 border border-zinc-800 p-6 rounded-2xl">
+                <h2 class="text-sm font-semibold mb-4 text-zinc-400 uppercase tracking-wider">Classification Counts</h2>
+                <div id="label-list" 
+                     hx-get="/api/v1/label-counts" 
+                     hx-trigger="every 2s"
+                     class="min-h-[200px]">
+                    <p class="text-zinc-600 italic text-sm">Initializing labels...</p>
                 </div>
             </div>
-        </div>
+
+            <!-- Distribution Chart -->
+            <div class="lg:col-span-2 bg-zinc-900/50 border border-zinc-800 p-6 rounded-2xl flex flex-col items-center">
+                <h2 class="text-sm font-semibold mb-6 text-zinc-400 uppercase tracking-wider self-start">Traffic Distribution</h2>
+                <div class="w-full max-w-[400px]">
+                    <canvas id="trafficChart"></canvas>
+                </div>
+            </div>
+        </main>
     </div>
 
+    <script>
+        const ctx = document.getElementById('trafficChart').getContext('2d');
+        let trafficChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: [],
+                datasets: [{
+                    data: [],
+                    backgroundColor: ['#818cf8', '#6366f1', '#4f46e5', '#4338ca', '#3730a3', '#312e81'],
+                    borderColor: '#18181b',
+                    borderWidth: 2,
+                    hoverOffset: 10
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { color: '#a1a1aa', font: { family: 'ui-monospace', size: 10 } }
+                    }
+                },
+                cutout: '70%'
+            }
+        });
+
+        async function updateChart() {
+            try {
+                const response = await fetch('/api/v1/label-counts/data');
+                const data = await response.json();
+                
+                trafficChart.data.labels = Object.keys(data);
+                trafficChart.data.datasets[0].data = Object.values(data);
+                trafficChart.update();
+            } catch (error) {
+                console.error("Failed to fetch chart data", error);
+            }
+        }
+
+        // Update chart every 2 seconds to match HTMX
+        setInterval(updateChart, 2000);
+        updateChart();
+    </script>
 </body>
 </html>
