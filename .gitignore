@@ -1,2 +1,5 @@
-
-app/__pycache__
+# Python bytecode and cache
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
