@@ -6,23 +6,24 @@ class TrafficClassifier:
     def __init__(self, model_path: str, encoder_path: str, interface: str):
         """
         Initializes the brain of Net-Sentinel.
-        Loads the Random Forest model and the Label Encoder.
+        Loads the LightGBM model and the Label Encoder.
         """
         try:
             self.model = joblib.load(model_path)
             self.encoder = joblib.load(encoder_path)
             
-            # Updated to match the Onu_features.csv schema exactly
+            # Aligned with DataScraper.py get_stats() and feature extraction order
             self.feature_names = [
                 f"{prefix}_{stat}" 
                 for prefix in ["up_pkt_len", "up_pkt_iat", "down_pkt_len", "down_pkt_iat", "bi_pkt_len", "bi_pkt_iat"]
-                for stat in ["min", "max", "avg", "median", "25_per", "75_per", "mad", "std"]
+                # Order must match PacketSniffer._calculate_54_features exactly:
+                for stat in ["min", "max", "avg", "mad", "std", "25_per", "median", "75_per"]
             ] + [
                 "transport_code", 
                 "up_pkt_num", 
                 "https_up_pkt_num", 
-                "https_down_pkt_num", 
                 "http_up_pkt_num", 
+                "https_down_pkt_num", 
                 "http_down_pkt_num"
             ]
             print(f"Successfully loaded model from {model_path}")
@@ -42,6 +43,9 @@ class TrafficClassifier:
             # 1. Convert to 2D array (1 sample, N features)
             data = pd.DataFrame([feature_vector], columns=self.feature_names)
             
+            # DEBUG - See the data right before it hits model.predict()
+            print(f"DEBUG - Raw Input Row: {data.iloc[0].to_dict()}")
+
             # 2. Perform the prediction (returns a number)
             prediction_numeric = self.model.predict(data)
             
@@ -70,6 +74,10 @@ class TrafficClassifier:
         try:
             # 1. Single Inference Pass
             data = pd.DataFrame([feature_vector], columns=self.feature_names)
+
+            # DEBUG - See the data right before it hits model.predict_proba()
+            print(f"DEBUG - Raw Input Row: {data.iloc[0].to_dict()}")
+
             probabilities = self.model.predict_proba(data)[0] # Shape: [n_classes]
             
             # 2. Extract stats
