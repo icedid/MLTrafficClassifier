@@ -1,0 +1,24 @@
+{# This map assigns a unique, distinct Tailwind color to each backend label #}
+{% set color_map = {
+    'GAME': 'bg-indigo-500',
+    'INSTANT-MESSAGE': 'bg-emerald-500',
+    'MAIL-SERVICE': 'bg-amber-400',
+    'NETWORK-STORAGE': 'bg-orange-500',
+    'NETWORK-TRANSMISSION': 'bg-rose-500',
+    'VIDEO': 'bg-purple-600',
+    'WEB-BROWSING': 'bg-sky-400'
+} %}
+
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-gray-900 rounded-xl border border-gray-800">
+    {% for label, count in label_counts.items() %}
+    <div class="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-800 transition-colors">
+        <div class="w-4 h-4 rounded-full shadow-lg {{ color_map.get(label, 'bg-gray-500') }}"></div>
+        <div class="flex flex-col">
+            <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                {{ label.replace('-', ' ') }}
+            </span>
+            <span class="text-lg font-mono text-white">{{ count }}</span>
+        </div>
+    </div>
+    {% endfor %}
+</div>
