@@ -1,0 +1,49 @@
+
+
+## Overview
+The "Drill-Down" feature allows users to interact with the Traffic Distribution chart to move from aggregate data to granular session evidence. This transforms the dashboard from a static display into an investigative tool for identifying specific IoT behaviors.
+
+## The Concept
+When a user clicks on a slice of the doughnut chart (e.g., "VIDEO"), the UI triggers a request to fetch the most recent sessions classified under that label. The details displayed focus on the **First 8 Packets** of the session, as these are the "DNA" used by the Machine Learning model for classification.
+
+## Data Points for Packet Details
+For each session identified in the drill-down, the following details are displayed:
+
+### 1. The 5-Tuple (Session Identity)
+- **Source IP/Port:** The originating device (e.g., a Smart Camera).
+- **Destination IP/Port:** The service endpoint (e.g., an AWS or Google Cloud server).
+- **Protocol:** TCP or UDP.
+
+### 2. Individual Packet Stats (The "First 8")
+A nested table or list showing the specific characteristics of the first 8 packets:
+- **Direction:** Inbound vs. Outbound.
+- **Packet Length:** Size in bytes.
+- **Inter-Arrival Time (IAT):** Time elapsed since the previous packet (in microseconds).
+- **Timestamp:** The exact moment of capture.
+
+### 3. Model Metadata
+- **Confidence Score:** How certain the model was about this specific session.
+- **Extraction Latency:** How fast the engine processed these 8 packets.
+
+## Technical Implementation (HTMX + Chart.js)
+
+### Trigger (Frontend)
+Using the `onClick` handler in Chart.js, we identify the label of the clicked segment:
+1. The user clicks the "GAME" slice.
+2. JavaScript captures the label: `activePoints[0].label`.
+3. `htmx.ajax('GET', '/ui/details/' + label, {target: '#detail-view'})` is called.
+
+### Fragment Swap (Backend/Frontend)
+1. The FastAPI backend receives the request for `/ui/details/GAME`.
+2. It queries the `app.state` for recent sessions matching that label.
+3. It renders a partial HTML template (`details_table.html`).
+4. HTMX swaps this fragment into a hidden or dedicated "Detail Panel" below the chart.
+
+## User Value: Transparency
+By showing the individual packets, we solve the **"Black Box"** problem:
+- **Validation:** Users can see *why* a device was flagged (e.g., "This camera is sending 1500-byte packets every 20ms to a foreign IP").
+- **Education:** Users learn the difference between a "Heartbeat" (small, infrequent packets) and a "Stream" (large, consistent packets).
+- **Security:** Immediate identification of destination IPs allows users to cross-reference IPs with known malicious databases.
+
+---
+*Note: This feature relies on the "In-Memory Sessionization" logic defined in the CESNET-QUIC22 Dataset documentation.*
