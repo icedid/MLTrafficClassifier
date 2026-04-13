@@ -1,0 +1,35 @@
+Test Results & Verification
+
+    Video Testing: Conducted 3 separate tests for video; all showed correct predictions for the IP.
+
+    Accuracy Verification: A key observation is that if the IP is present in the prediction, the prediction is correct.
+
+    Theory on Performance: Current theory suggests predictions are now correct, though there is a lack of understanding regarding the specific data flow.
+
+Technical Observations & Rules
+
+    The "First 8" Rule: The system apparently ignores the rest of the data because of the "first 8 rule".
+
+    Traffic Characteristics: Questions whether the traffic is "chatty or noisy."
+
+    Known Limitations: * The system has a hard time predicting "small packet stuff."
+
+        Web browsing is currently not working.
+
+        The system did not "pick up" chat (instant messaging).
+
+Troubleshooting
+
+    Browser Issues: Identified that issues were likely caused by browser adblockers and "other weird stuff."
+
+    Infrastructure: Noted a shift to "do it on browser" or potentially moving to a "Lv 7 app" (Layer 7 application).
+
+Experimental Notes & Future Tasks
+
+    Network Storage: Tested the "Network Storage" category by performing an upload to a "game drive".
+
+    Data Management: Notes a possible need for "SQL."
+
+    Next Steps: * Need to test other types of predictions.
+
+        Discuss "other video preds" (video predictions).
