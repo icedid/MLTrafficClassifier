@@ -1,35 +1,49 @@
-Test Results & Verification
+Based on your handwritten flowchart and our diagnostic session regarding the network traffic analysis implementation, here are your converted notes. They summarize the findings, theories, and identified limitations of the classification model.
+Diagnostic Notes: Traffic Analysis & Model Verification
 
-    Video Testing: Conducted 3 separate tests for video; all showed correct predictions for the IP.
+Date: 14/04/2026
 
-    Accuracy Verification: A key observation is that if the IP is present in the prediction, the prediction is correct.
+Project Context: Validation of the DFI/DPI hybrid identification model.
+1. Initial Test Results (Video Identification)
 
-    Theory on Performance: Current theory suggests predictions are now correct, though there is a lack of understanding regarding the specific data flow.
+    Observations: Conducted three separate tests specifically for video traffic.
 
-Technical Observations & Rules
+    Result: All tests showed correct predictions for the target IP address.
 
-    The "First 8" Rule: The system apparently ignores the rest of the data because of the "first 8 rule".
+    Key Verification Rule: If the IP is present in the prediction output, the prediction is considered correct.
 
-    Traffic Characteristics: Questions whether the traffic is "chatty or noisy."
+    Theory: The prediction logic is now accurate; the remaining confusion stems from a lack of complete understanding of the underlying data flow.
 
-    Known Limitations: * The system has a hard time predicting "small packet stuff."
+2. The "First 8 Packets" Rule & Its Impact
 
-        Web browsing is currently not working.
+    Implementation: The model intercepted only the first 8 packets of each flow for statistical feature extraction.
 
-        The system did not "pick up" chat (instant messaging).
+    Observation: The system appears to "ignore" the rest of the session once the first 8 packets are processed.
 
-Troubleshooting
+    Technical Justification: According to the research, classification accuracy increases rapidly until N=8, after which it remains almost unchanged. Intercepting only these packets optimizes computing and storage resources.
 
-    Browser Issues: Identified that issues were likely caused by browser adblockers and "other weird stuff."
+3. Browser-Level Issues & Diagnosis
 
-    Infrastructure: Noted a shift to "do it on browser" or potentially moving to a "Lv 7 app" (Layer 7 application).
+    Issue identified: Initial inconsistencies were likely caused by browser-side interference.
 
-Experimental Notes & Future Tasks
+    Factors: Ad-blockers and other "weird stuff" occurring at the Layer 7 (Application Layer).
 
-    Network Storage: Tested the "Network Storage" category by performing an upload to a "game drive".
+    Proposed Solution: Use a "bare" browser for future testing to ensure clean data collection without extension-based noise.
 
-    Data Management: Notes a possible need for "SQL."
+4. Identified Model Limitations
 
-    Next Steps: * Need to test other types of predictions.
+    Small Packet Sensitivity: The model has a documented "hard time" predicting activities characterized by small packet bursts.
 
-        Discuss "other video preds" (video predictions).
+    Chat Detection: The system currently does not pick up "chat" traffic effectively.
+
+    Web Browsing: Testing showed that the "web-browsing" category is not yet working as expected.
+
+    Network Storage: Successfully verified the "network-storage" category by testing uploads to a game drive.
+
+5. Future Testing & Unresolved Questions
+
+    Other Predictions: Need to investigate why the system generates "other" video predictions (false positives or background streams?).
+
+    Category Expansion: Need to systematically test all other prediction types (e.g., instant messaging, mail service) to ensure the 54 features are being associated correctly.
+
+    Flow Analysis: Further investigation is required to reconcile why some chat or small-packet flows are missed despite protocol-compliant stream logging.
