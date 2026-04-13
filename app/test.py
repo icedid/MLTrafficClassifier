@@ -16,6 +16,7 @@ class TrafficClassifier:
         try:
             self.model = joblib.load(model_path)
             self.encoder = joblib.load(encoder_path)
+            print(f"[*] Encoder Classes: {self.encoder.classes_}")
             
             # Feature order based on the Onu_features.csv methodology
             self.feature_names = [
@@ -47,11 +48,8 @@ class TrafficClassifier:
             prediction_numeric = np.argmax(probabilities)
             
             print(f"DEBUG [Model]: Probabilities: {np.round(probabilities, 3)} | Max: {max_prob:.2f}")
-
-            if max_prob >= threshold:
-                label = self.encoder.inverse_transform([prediction_numeric])[0]
-            else:
-                label = "Unknown"
+    
+            label = self.encoder.inverse_transform([prediction_numeric])[0]
 
             return str(label), float(max_prob)
         except Exception as e:
