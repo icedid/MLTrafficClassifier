@@ -2,6 +2,7 @@ import time
 import numpy as np
 from collections import defaultdict
 from scapy.all import sniff, IP, TCP, UDP, get_if_addr
+from scipy.stats import median_abs_deviation
 
 class PacketSniffer:
     def __init__(self, interface: str, packet_callback, window_size=8):
@@ -16,9 +17,10 @@ class PacketSniffer:
             self.local_ip = "127.0.0.1"
 
         self.flows = defaultdict(list)
+        # FIX 1: Added session lock to ensure each flow is only classified once
+        self.completed_sessions = set()
 
     def start(self):
-        """This was the missing method causing your AttributeError!"""
         self._running = True
         print(f"[*] Flow Scraper started on {self.interface} (Local: {self.local_ip})")
         sniff(
@@ -32,20 +34,32 @@ class PacketSniffer:
         self._running = False
 
     def extract_features(self, *args):
-        # Extract the packet (handles the 'self' mismatch we discussed)
+        # Handle the Scapy callback argument correctly
         packet = args[-1]
-        if not packet.haslayer(IP): return None
+        if not packet.haslayer(IP): return None, None
 
-        # 5-Tuple Extraction
-        proto = packet[IP].proto
         src, dst = packet[IP].src, packet[IP].dst
+        
+        # FIX 2: Added intranet noise filtering
+        if src.startswith('192.168.') and dst.startswith('192.168.'):
+            return None, None
+
+        proto = packet[IP].proto
         sport = packet.sport if packet.haslayer(TCP) or packet.haslayer(UDP) else 0
         dport = packet.dport if packet.haslayer(TCP) or packet.haslayer(UDP) else 0
-        flow_key = (src, dst, sport, dport, proto)
+
+        # FIX 3: Implemented bidirectional flow key using sorted tuples
+        ip_pair = tuple(sorted([src, dst]))
+        port_pair = tuple(sorted([sport, dport]))
+        flow_key = (ip_pair, port_pair, proto)
+
+        # Ensure we don't re-process a completed session
+        if flow_key in self.completed_sessions:
+            return None, None
 
         self.flows[flow_key].append({
             'len': len(packet),
-            'time': time.time(),
+            'time': float(packet.time), # Use precise packet timestamp
             'is_up': src == self.local_ip,
             'sport': sport,
             'dport': dport
@@ -53,65 +67,67 @@ class PacketSniffer:
 
         if len(self.flows[flow_key]) >= self.window_size:
             features = self._calculate_54_features(self.flows[flow_key], proto)
+            
+            metadata = {
+                "src": src, "dst": dst, 
+                "sport": sport, "dport": dport, 
+                "proto": "TCP" if proto == 6 else ("UDP" if proto == 17 else str(proto))
+            }
+            
+            # Lock the session and clean up memory
+            self.completed_sessions.add(flow_key)
             del self.flows[flow_key]
-            return features
+            return features, metadata
         
-        return None
+        return None, None
+
+    def _feature_calculate_exact(self, stream_list):
+        """Calculates interleaved stats for Time and Length exactly as in test.py."""
+        pkt_count = len(stream_list)
+        if pkt_count == 0:
+            return np.zeros((8, 2)), 0
+            
+        stream = np.array(stream_list)
+        # Apply IAT calculation and pad first packet with 0
+        if pkt_count > 1:
+            stream[:, 0] = np.r_[0, np.diff(np.abs(stream[:, 0])).astype(float)]
+        else:
+            stream[:, 0] = np.array([0.0])
+            
+        stream = stream.astype(float)
+        # Vertical stack of percentiles, mean, std, and MAD
+        stats = np.vstack([
+            np.percentile(stream, np.linspace(0., 100., 5), axis=0),
+            np.mean(stream, axis=0),
+            np.std(stream, axis=0),
+            median_abs_deviation(stream, axis=0)
+        ])
+        return stats, pkt_count
 
     def _calculate_54_features(self, flow_data, proto):
-            """Calculates stats safely to avoid NumPy truthiness and math errors."""
-            
-            def get_stats(data):
-                # Use len() check because 'if data:' fails if data is an array
-                if len(data) == 0: return [0.0] * 8
+        """Assembles the 54-feature vector in the correct Bi->Up->Down order."""
+        bistream = [[p['time'], p['len']] for p in flow_data]
+        upstream = [[p['time'], p['len']] for p in flow_data if p['is_up']]
+        downstream = [[p['time'], p['len']] for p in flow_data if not p['is_up']]
+
+        bi_stats, _ = self._feature_calculate_exact(bistream)
+        up_stats, up_pkt_count = self._feature_calculate_exact(upstream)
+        down_stats, _ = self._feature_calculate_exact(downstream)
+
+        # Transport code: 0 for TCP, 1 for UDP, 2 for Other
+        flow_proto = 0 if proto == 6 else (1 if proto == 17 else 2)
+
+        up_ports, down_ports = [], []
+        for p in flow_data:
+            if p['is_up']: up_ports.extend([p['sport'], p['dport']])
+            else: down_ports.extend([p['sport'], p['dport']])
                 
-                # Convert to NumPy array immediately for safe math
-                arr = np.array(data).astype(float)
-                med = np.median(arr)
-                
-                return [
-                    float(np.min(arr)), float(np.max(arr)), float(np.mean(arr)),
-                    float(np.median(np.abs(arr - med))), # MAD: array - scalar works now
-                    float(np.std(arr)), float(np.percentile(arr, 25)),
-                    float(med), float(np.percentile(arr, 75))
-                ]
+        up_443, up_80 = up_ports.count(443), up_ports.count(80)
+        down_443, down_80 = down_ports.count(443), down_ports.count(80)
 
-            # 1. Segregate data
-            up = [p for p in flow_data if p['is_up']]
-            down = [p for p in flow_data if not p['is_up']]
-            
-            # 2. Extract sequences
-            up_lens = [p['len'] for p in up]
-            down_lens = [p['len'] for p in down]
-            bi_lens = [p['len'] for p in flow_data]
-            
-            # Inter-Arrival Times (IAT)
-            up_times = [p['time'] for p in up]
-            down_times = [p['time'] for p in down]
-            bi_times = [p['time'] for p in flow_data]
-            
-            up_iats = np.diff(up_times) if len(up_times) > 1 else []
-            down_iats = np.diff(down_times) if len(down_times) > 1 else []
-            bi_iats = np.diff(bi_times) if len(bi_times) > 1 else []
-
-            # 3. Assemble the 54 Features
-            f = []
-            f.extend(get_stats(up_lens))   # 0-7
-            f.extend(get_stats(up_iats))   # 8-15
-            f.extend(get_stats(down_lens)) # 16-23
-            f.extend(get_stats(down_iats)) # 24-31
-            f.extend(get_stats(bi_lens))   # 32-39
-            f.extend(get_stats(bi_iats))   # 40-47
-            
-            # 48: Transport Code (0:TCP, 1:UDP, 2:Other)
-            f.append(0.0 if proto == 6 else (1.0 if proto == 17 else 2.0))
-            # 49: Upstream packet count
-            f.append(float(len(up)))
-            
-            # 50-53: Port Flags
-            f.append(1.0 if any(p['dport'] == 443 for p in up) else 0.0) 
-            f.append(1.0 if any(p['dport'] == 80 for p in up) else 0.0)  
-            f.append(1.0 if any(p['sport'] == 443 for p in down) else 0.0) 
-            f.append(1.0 if any(p['sport'] == 80 for p in down) else 0.0)  
-
-            return f
+        # Assemble final vector using interleaved raveling
+        features = np.r_[
+            np.hstack([bi_stats, up_stats, down_stats]).ravel(),
+            up_pkt_count, up_443, up_80, down_443, down_80, flow_proto
+        ]
+        return features.tolist()
