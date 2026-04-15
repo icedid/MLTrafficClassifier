@@ -60,10 +60,11 @@ class NetworkEngine(NetworkEngineProvider):
             self._thread.join(timeout=2)
             
     def handle_data(self, packet):
-        features = self.scraper.extract_features(self, packet)
-        
-        if features is not None:
-            self.packet_queue.put(features)
+        res = self.scraper.extract_features(self, packet)
+        if res is not None:
+            features, metadata = res
+            if features is not None:
+                self.packet_queue.put((features, metadata))
 
     def ReturnLabelcount(self) -> Dict[str, int]:
         """Returns the current classification tally."""
@@ -75,12 +76,12 @@ class NetworkEngine(NetworkEngineProvider):
             # 1. Capture/Extract Features 
             # (Replace this with your real sniffer logic later)
             try:
-                features = self.packet_queue.get(timeout=1.0)
+                features, metadata = self.packet_queue.get(timeout=1.0)
                 
                 # 2. Run the ML Prediction
-                label = self.classifier.predict(features)
+                label,confidence = self.classifier.get_prediction_with_threshold(features)
                 
-                #print(f"[RESULT] Classified as: {label}")
+                print(f"[CLASSIFIED] {metadata['src']}:{metadata['sport']} -> {metadata['dst']}:{metadata['dport']} ({metadata['proto']}) | Label: {label} ({confidence:.2%})")
                 
                 # 3. Update the counts
                 if label in self.labelcount:
