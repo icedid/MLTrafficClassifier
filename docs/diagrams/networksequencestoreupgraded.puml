@@ -1,0 +1,50 @@
+@startuml
+' --- Configuration ---
+skinparam class {
+    BackgroundColor PaleGreen
+    BorderColor DarkSlateGray
+    ArrowColor DarkSlateGray
+    FontName "Segoe UI"
+}
+skinparam titleFontSize 18
+
+title Network Sequence Monitoring Architecture
+
+' --- Notes ---
+note "Packet Sequence Store\n- Stores Sequences & Predictions" as HeaderNote
+SequenceManager .. HeaderNote
+
+' --- Class Definitions ---
+
+class SequenceManager {
+    + manageAll()
+    - List<SequenceAggregator> aggregators
+    --
+    *Stores each sequence aggregator*
+}
+
+class SequenceAggregator {
+    + label: String
+    + maintainsState(): Category
+    - List<Sequences> rolling_window
+    --
+    *Supports Video, Text, etc.*
+}
+
+class Sequences {
+    + timestamp: float
+    + metadata: dict
+    + prediction: float
+    --
+    *Snapshot of metadata of each packet*
+}
+
+' --- Relationships ---
+
+' Composition: The Manager owns the Aggregators
+SequenceManager "1" *-- "*" SequenceAggregator : manages >
+
+' Aggregation: Aggregators contain recent Sequence snapshots
+SequenceAggregator "1" o-- "*" Sequences : stores history >
+
+@enduml
