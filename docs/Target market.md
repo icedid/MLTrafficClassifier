@@ -1,4 +1,4 @@
-### 1. The Core Problem: The "Black Box" IoT Device
+0### 1. The Core Problem: The "Black Box" IoT Device
 
 Most modern homes are filled with IoT (Internet of Things) devices. These devices often use **encrypted traffic**, meaning a standard router can’t tell _what_ they are sending—only _where_ they are sending it.
 

@@ -10,8 +10,8 @@ import uvicorn
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    mode = os.getenv("APP_MODE", "test")
-    app.state.engine = EngineFactory.getEngine("prod")
+    mode = os.getenv("APP_MODE", "prod")
+    app.state.engine = EngineFactory.getEngine(mode)
     app.state.engine.start()
     print("Engine started in mode:", mode)
     yield
@@ -21,15 +21,6 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
-
-
-# --- THE DATA BRIDGE ---
-# We attach a dictionary to the app state so 'routes.py' can see it.
-app.state.latest_traffic = {
-    "app": "WAITING...", 
-    "confidence": 0.0,
-    "metadata": {"packets": 0}
-}
 
 # --- MOUNT THE ROUTER ---
 app.include_router(ui_router)
