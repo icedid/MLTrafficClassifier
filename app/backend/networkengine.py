@@ -60,7 +60,7 @@ class NetworkEngine(NetworkEngineProvider):
             self._thread.join(timeout=2)
             
     def handle_data(self, packet):
-        res = self.scraper.extract_features(self, packet)
+        res = self.scraper.extract_features(packet)
         if res is not None:
             features, metadata = res
             if features is not None:
@@ -80,14 +80,15 @@ class NetworkEngine(NetworkEngineProvider):
                 
                 # 2. Run the ML Prediction
                 label,confidence = self.classifier.get_prediction_with_threshold(features)
-                
-                print(f"[CLASSIFIED] {metadata['src']}:{metadata['sport']} -> {metadata['dst']}:{metadata['dport']} ({metadata['proto']}) | Label: {label} ({confidence:.2%})")
+                label = label.upper() # Standardize to match our dict keys
                 
                 # 3. Update the counts
                 if label in self.labelcount:
                     self.labelcount[label] += 1
-                
-                # 4. Small sleep to prevent CPU spiking (adjust based on packet rate)
+                    print(f"[ENGINE] Classified {label} ({confidence:.2f}) - Total: {self.labelcount[label]}")
+                else:
+                    print(f"[ENGINE] Warning: Label '{label}' not in labelcount dictionary.")
+
                 time.sleep(0.5)
             except queue.Empty:
                 continue
