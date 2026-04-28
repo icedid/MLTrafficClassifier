@@ -18,6 +18,11 @@ async def get_label_counts_data(request: Request):
     print(f"[DEBUG] Frontend API (JSON) caught updated counts: {counts}")
     return counts
 
+@router.get("/api/v1/conversations/{label}")
+async def get_conversations(label: str, request: Request):
+    convs = request.app.state.engine.ReturnConversations(label)
+    return convs
+
 @router.get("/api/v1/label-counts", response_class=HTMLResponse)
 async def get_label_counts(request: Request):
     counts = request.app.state.engine.ReturnLabelcount()

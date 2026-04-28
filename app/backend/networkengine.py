@@ -33,6 +33,8 @@ class NetworkEngine(NetworkEngineProvider):
             "VIDEO": 0,
             "WEB-BROWSING": 0,
         }
+        self.conversations: Dict[str, list] = {k: [] for k in self.labelcount}
+        self._MAX_CONVERSATIONS = 50
 
     def start(self) -> None:
         """Starts the packet processing loop in a background thread."""
@@ -66,6 +68,9 @@ class NetworkEngine(NetworkEngineProvider):
             if features is not None:
                 self.packet_queue.put((features, metadata))
 
+    def ReturnConversations(self, label: str) -> list:
+        return list(reversed(self.conversations.get(label.upper(), [])))
+
     def ReturnLabelcount(self) -> Dict[str, int]:
         """Returns the current classification tally."""
         return self.labelcount.copy()
@@ -86,6 +91,11 @@ class NetworkEngine(NetworkEngineProvider):
                 if label in self.labelcount:
                     self.labelcount[label] += 1
                     print(f"[ENGINE] Classified {label} ({confidence:.2f}) - Total: {self.labelcount[label]}")
+                    entry = {**metadata, "confidence": round(confidence, 3)}
+                    convs = self.conversations[label]
+                    convs.append(entry)
+                    if len(convs) > self._MAX_CONVERSATIONS:
+                        convs.pop(0)
                 else:
                     print(f"[ENGINE] Warning: Label '{label}' not in labelcount dictionary.")
 
